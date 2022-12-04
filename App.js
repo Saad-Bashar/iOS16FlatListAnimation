@@ -4,15 +4,33 @@ import { Ionicons, MaterialCommunityIcons } from "@expo/vector-icons";
 import NotificationsList from "./src/components/NotificationList";
 import { useEffect, useState } from "react";
 import dayjs from "dayjs";
+import Animated, {
+  interpolate,
+  useAnimatedStyle,
+  useDerivedValue,
+  useSharedValue,
+} from "react-native-reanimated";
 
 export default function App() {
   const [date, setDate] = useState(dayjs());
+  const footerVisibility = useSharedValue(1);
+  const footerHeight = useDerivedValue(() => {
+    return interpolate(footerVisibility.value, [0, 1], [0, 85]);
+  });
+
   useEffect(() => {
     let timer = setInterval(() => {
       setDate(dayjs());
     }, 1000 * 60);
     return () => clearInterval(timer);
   }, []);
+
+  const animatedFooterStyle = useAnimatedStyle(() => {
+    return {
+      opacity: footerVisibility.value,
+      marginTop: interpolate(footerVisibility.value, [0, 1], [-85, 0]),
+    };
+  });
 
   return (
     <ImageBackground source={wallpaper} style={StyleSheet.absoluteFill}>
@@ -23,20 +41,21 @@ export default function App() {
       </View>
 
       {/* Notification List */}
-      <NotificationsList />
+      <NotificationsList
+        footerVisibility={footerVisibility}
+        footerHeight={footerHeight}
+      />
 
       {/* footer */}
-      <View style={styles.footer}>
-        {/* flashlight icon */}
+      <Animated.View style={[styles.footer, animatedFooterStyle]}>
         <View style={styles.icon}>
           <MaterialCommunityIcons name="flashlight" size={24} color="white" />
         </View>
 
-        {/* camera icon */}
         <View style={styles.icon}>
           <Ionicons name="ios-camera" size={24} color="white" />
         </View>
-      </View>
+      </Animated.View>
     </ImageBackground>
   );
 }
